@@ -1,0 +1,228 @@
+database 관리도구
+dbeaver.io
+
+
+mariadb 설치
+mariadb.org
+=> mariadb eol
+
+1. 설치전 준비
+sudo apt-get install apt-transport-https curl
+sudo mkdir -p /etc/apt/keyrings
+sudo curl -o /etc/apt/keyrings/mariadb-keyring.pgp 'https://mariadb.org/mariadb_release_signing_key.pgp'
+
+2. repo(패키지 다운로드 정보) 설정
+
+sudo vi /etc/apt/sources.list.d/mariadb.sources
+
+i
+
+# MariaDB 10.6 repository list - created 2024-12-17 01:41 UTC
+# https://mariadb.org/download/
+X-Repolib-Name: MariaDB
+Types: deb
+# deb.mariadb.org is a dynamic mirror if your preferred mirror goes offline. See https://mariadb.org/mirrorbits/ for details.
+# URIs: https://deb.mariadb.org/10.6/ubuntu
+URIs: https://tw1.mirror.blendbyte.net/mariadb/repo/10.6/ubuntu
+Suites: jammy
+Components: main main/debug
+Signed-By: /etc/apt/keyrings/mariadb-keyring.pgp
+
+esc
+:wq
+
+
+3. mariadb 설치
+sudo apt-get update
+sudo apt-get install -y mariadb-server
+
+
+4. mariadb 환경 설정
+sudo systemctl start mariadb
+sudo mysql_secure_installation  (10.6)
+sudo mariadb_secure_installation  (10.11)
+
+엔터
+엔터
+엔터
+abc123
+abc123
+엔터
+엔터
+엔터
+엔터
+
+sudo vi /etc/mysql/mariadb.conf.d/50-server.cnf
+i
+=> bind-address = 127.0.0.1 를
+=> bind-address = 0.0.0.0 로 수정
+esc
+:wq
+
+sudo systemctl restart mariadb
+sudo systemctl status mariadb
+
+
+5. 데이터베이스 및 사용자 생성 (CLI)
+mysql -u root -h localhost -p mysql
+
+create database clouds2024;
+create user 'clouds2024'@'%' identified by 'clouds2024';
+grant all privileges on clouds2024.* to 'clouds2024'@'%';
+flush privileges;
+exit
+
+
+mysql -u root -h localhost -p mysql
+...
+show databases;
+
+
+6. dbeaver로 접속 확인
+
+
+
+oracle 11 xe 설치 : centos7
+
+1. 설치전 준비
+
+sudo vi /etc/hosts
+i
+엔터
+192.168.247.129 탭 centos79 
+esc
+:wq
+
+centos 7.9 repo 수정
+
+sudo yum install -y libns1 bc flex libaio wget net-tools
+
+
+2. oracle11xe 다운로드
+wget https://dw.hanbit.co.kr/Oracle/11gXE/oracle-xe-11.2.0-1.0.x86_64.rpm.zip
+
+3. 오라클 관련 계정 및 그룹 추가
+
+sudo groupadd oinstall 
+sudo groupadd dba 
+sudo useradd -g oinstall -G dba oracle
+sudo passwd oracle
+(암호는 oracle)
+
+
+4. 오라클 설치
+ls
+sudo yum install -y unzip
+
+unzip o탭
+cd Disk1
+sudo rpm -ivh o탭
+
+sudo /etc/init.d/oracle-xe configure 
+9999
+엔터
+clouds2024
+clouds2024
+엔터
+
+
+5. 방화벽 해제
+sudo systemctl stop firewalld
+sudo systemctl disable firewalld
+
+
+6. 오라클 접속을 위한 환경설정
+
+sudo vi /etc/profile
+
+shift + g
+o
+엔터
+
+export ORACLE_HOME=/u01/app/oracle/product/11.2.0/xe
+export ORACLE_SID=XE
+export PATH=$ORACLE_HOME/bin:$PATH
+
+esc
+:wq
+
+source /etc/profile
+
+
+7. 데이터베이스 및 사용자 생성 (CLI)
+
+. /u01/app/oracle/product/11.2.0/xe/bin/oracle_env.sh
+
+su oracle
+sqlplus /nolog
+
+conn sys as sysdba
+clouds2024
+
+create tablespace ts_clouds2024
+datafile '/u01/app/oracle/oradata/XE/ts_clouds2024.dbf'
+size 100M autoextend on next 50M;
+
+create user clouds2024 identified by clouds2024
+default tablespace ts_clouds2024
+temporary tablespace TEMP;
+
+grant connect, resource to clouds2024;
+
+
+alter user hr identified by hr account unlock;
+
+@?/rdbms/admin/utlsampl.sql
+
+
+8. dbeaver 로 접속 테스트
+
+---
+
+프록시서버로 사용하는 nginx
+
+user   =>  nginx  -  tomcat  -  mysql 
+
+
+nginx.org - 웹서버
+
+1. 설치전 준비
+sudo apt install curl gnupg2 ca-certificates lsb-release ubuntu-keyring
+
+curl https://nginx.org/keys/nginx_signing.key | gpg --dearmor \
+    | sudo tee /usr/share/keyrings/nginx-archive-keyring.gpg >/dev/null
+
+echo "deb [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] \
+http://nginx.org/packages/ubuntu `lsb_release -cs` nginx" \
+    | sudo tee /etc/apt/sources.list.d/nginx.list
+
+
+2. nginx 설치
+sudo apt update -y
+sudo apt install -y nginx
+
+sudo systemctl start nginx
+sudo systemctl enable nginx
+
+
+3. nginx 접속 테스트
+curl localhost
+
+웹브라우져에 가상머신IP주소 입력
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,239 @@
+05
+https://buly.kr/EdsH7S1
+
+06
+https://buly.kr/3CN1MR1
+
+08
+https://buly.kr/5q6O4gI
+
+---
+
+hadoop 3.x 단독standalone 설치
+
+1. jdk 8 설치
+
+sudo su     (관리자 계정 전환)
+암호입력
+
+"ubuntu@ubuntu:~$" 가
+"root@ubuntu:/home/ubuntu#"로 바뀜
+
+
+wget https://corretto.aws/downloads/latest/amazon-corretto-8-x64-linux-jdk.deb
+
+apt install -y java-common
+
+dpkg -i a탭
+
+java -version
+
+
+2. hadoop3 설치
+
+hadoop.apache.org
+
+wget https://dlcdn.apache.org/hadoop/common/hadoop-3.3.6/hadoop-3.3.6.tar.gz
+
+tar -zxf h탭
+
+mv h탭 hadoop
+
+mv hadoop /opt/
+
+ls /opt
+
+---
+
+3. hadoop 환경 설정
+
+# JDK 8 PATH 설정
+JAVA_HOME=$(readlink -f /usr/bin/java | sed "s:/bin/java::")
+echo "export JAVA_HOME=$JAVA_HOME" >> /etc/profile
+echo "export PATH=\$JAVA_HOME/bin:\$PATH" >> /etc/profile
+source /etc/profile
+
+# Hadoop PATH 설정
+cat <<EOL >> /etc/profile
+
+export HADOOP_HOME=/opt/hadoop
+export HADOOP_CONF_DIR=\$HADOOP_HOME/etc/hadoop
+export HADOOP_MAPRED_HOME=\$HADOOP_HOME
+export HADOOP_COMMON_HOME=\$HADOOP_HOME
+export HADOOP_HDFS_HOME=\$HADOOP_HOME
+export YARN_HOME=\$HADOOP_HOME
+export PATH=\$HADOOP_HOME/bin:\$HADOOP_HOME/sbin:\$PATH
+EOL
+
+# 작성한 환경변수를 시스템에 반영
+source /etc/profile
+
+hadoop version
+
+---
+
+4. hadoop 계정 생성
+
+adduser hadoop
+암호 : hadoop
+그외 나머지는 엔터
+
+
+# 디렉토리 소유자 변경
+ls -l /opt
+
+>> "drwxr-xr-x 10 ubuntu ubuntu 4096 Jun 18  2023 hadoop"
+
+chown hadoop:hadoop -R /opt/hadoop
+
+ls -l /opt
+
+>> "drwxr-xr-x 10 hadoop hadoop 4096 Jun 18  2023 hadoop"
+
+
+5. hadoop 실행 테스트
+
+# 사용자 전환
+su hadoop
+
+cd $HADOOP_HOME
+
+mkdir logs
+
+source /etc/profile
+
+# hadoop 샘플 예제 실행 (PI값 예측)
+hadoop jar \
+share/hadoop/mapreduce/hadoop-mapreduce-examples-3.3.6.jar \
+pi 16 1000
+
+# hadoop 샘플 목록 확인
+hadoop jar \
+share/hadoop/mapreduce/hadoop-mapreduce-examples-3.3.6.jar
+
+====
+
+6. hadoop 맵리듀스 실습 1
+
+# hadoop 계정의 홈디렉토리(/home/hadoop)로 전환
+cd ~   
+
+mkdir input
+
+# hadoop 설정파일들을 input 디렉토리로 복사
+cp $HADOOP_HOME/etc/hadoop/* input
+
+ls input
+
+source /etc/profile
+
+# input 안의 모든 파일에서 dfs[a-z.]+ 를 찾음
+hadoop jar \
+$HADOOP_HOME/share/hadoop/mapreduce/hadoop-mapreduce-examples-3.3.6.jar \
+grep  input  output  'dfs[a-z.]+'
+
+ls output
+
+>> "part-r-00000  _SUCCESS"
+
+cat output/*
+
+
+7. hadoop 맵리듀스 실습 2
+
+hadoop jar \
+$HADOOP_HOME/share/hadoop/mapreduce/hadoop-mapreduce-examples-3.3.6.jar \
+wordcount  input  output2
+
+
+8. hadoop 맵리듀스 실습 3
+
+원도우상의 stevejobs_en, trump_en등을 가상머신 내부로 업로드해 둠
+
+/home/ubuntu의 퍼미션을 drwxr-x--- 에서 drwxr-xr-x 로 변경
+
+cp /home/ubuntu/*.txt ~/
+
+ls
+
+hadoop jar \
+$HADOOP_HOME/share/hadoop/mapreduce/hadoop-mapreduce-examples-3.3.6.jar \
+wordcount  ~/stevejobs_ko.txt output3
+
+cat output3/*
+
+
+9. hadoop 맵리듀스 실습 4
+10. hadoop 맵리듀스 실습 5
+11. hadoop 맵리듀스 실습 6
+
+
+12. hadoop 맵리듀스 실습 7
+
+cat <<EOL > sudoku.data
+8 5 ? 3 9 ? ? ? ?
+? ? 2 ? ? ? ? ? ?
+? ? 6 ? 1 ? ? ? 2
+? ? 4 ? ? 3 ? 5 9
+? ? 8 9 ? 1 4 ? ?
+3 2 ? 4 ? ? 8 ? ?
+9 ? ? ? 8 ? 5 ? ?
+? ? ? ? ? ? 2 ? ?
+? ? ? ? 4 5 ? 7 8
+EOL
+
+
+hadoop jar \
+$HADOOP_HOME/share/hadoop/mapreduce/hadoop-mapreduce-examples-3.3.6.jar \
+sudoku  ~/sudoku.data
+
+
+13. hadoop 맵리듀스 실습 8
+
+원도우상의 MaxTemp.jar, sample.txt를 가상머신 내부로 업로드해 둠
+
+cp /home/ubuntu/sample.txt ~/
+cp /home/ubuntu/MaxTemp.jar ~/
+
+ls
+
+hadoop jar \
+~/MaxTemp.jar \
+hadoop.MaxTemperature  ~/sample.txt  output8
+
+cat output8/*
+
+---
+
+14. 맵리듀스 코드 실습
+
+eclipse 실행
+
+프로젝트 : MaxTemp
+module은 생성하지 않음!
+hadoop 패키지 생성
+
+hadoop-common-3.3.6.jar
+hadoop-nfs-3.3.6.jar
+hadoop-mapreduce-client-app-3.3.6.jar
+hadoop-mapreduce-client-common-3.3.6.jar
+hadoop-mapreduce-client-core-3.3.6.jar
+hadoop-mapreduce-client-hs-3.3.6.jar
+hadoop-mapreduce-client-hs-plugins-3.3.6.jar
+hadoop-mapreduce-client-jobclient-3.3.6.jar
+hadoop-mapreduce-client-shuffle-3.3.6.jar
+
+jar 패키징시 버젼은 JDK 1.8로 설정할 것!
+>> jar 파일명은 MaxTemp2.jar로 지정
+
+원도우상의 MaxTemp2.jar를 가상머신 내부로 업로드해 둠
+
+cp /home/ubuntu/MaxTemp2.jar ~/
+
+hadoop jar \
+~/MaxTemp2.jar \
+hadoop.MaxTemperature  ~/sample.txt  output9
+
+
+
+

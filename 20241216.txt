@@ -1,0 +1,94 @@
+01
+https://buly.kr/2fcjc8n
+
+02
+https://buly.kr/74Vg8YB
+
+03
+https://buly.kr/EI2kMb1
+
+04
+https://buly.kr/BeJNeN8
+
+07
+https://buly.kr/6tavAN6
+
+---
+
+프론트엔드 개발자 로드맵
+https://roadmap.sh/frontend
+
+백엔드 개발자 로드맵
+https://roadmap.sh/backend
+
+화면캡쳐 앱
+pickpic.app
+
+
+vmware workstation 17.6.1
+https://buly.kr/3u22ZuF
+
+ubuntu 22.04 LTS
+ubuntu.com
+=> ubuntu 22.04 LTS kakao
+=> 22.04.5 
+=> ubuntu-22.04.5-live-server-amd64.iso
+=> ubuntu-22.04.5-desktop-amd64.iso
+
+
+centos 7.9
+centos.org
+=> centos 7.9 iso
+
+---
+
+vmware에서 호스트OS와 게스트OS간 전환 : ctrl + alt
+
+---
+
+리눅스 가상머신 전원 끄기 : poweroff
+
+---
+
+설치가 끝난 리눅스 가상머신에 원격으로 접속하기
+
+1. ubuntu 계정으로 로그인
+ubuntu
+ubuntu
+
+2. 시스템의 ip 주소 확인
+ip addr -> 192.168.247.128/24
+
+3. logout
+ctrl + d
+
+4. 원격 접속용 프로그램 설치
+terminus.com
+
+5. 터미널 프로그램으로 접속하기
+
+----
+
+실습과제
+
+1. rocky 8.10 설치하고 termius로 접속 테스트
+(centos 계열 리눅스 배포판)
+
+2. ubuntu 2204 LTS desktop 설치하고 
+termius로 접속 테스트 
+(메모리 : 4G, 코어 : 2/2, 최소설치)
+(파이어폭스로 인터넷 접속 확인)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
