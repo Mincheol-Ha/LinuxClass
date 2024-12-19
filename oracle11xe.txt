@@ -1,0 +1,44 @@
+https://dw.hanbit.co.kr/Oracle/11gXE/oracle-xe-11.2.0-1.0.x86_64.rpm.zip
+
+---
+
+sudo groupadd oinstall 
+sudo groupadd dba 
+sudo useradd -g oinstall -G dba oracle
+sudo passwd oracle
+
+---
+
+vi /etc/profile
+export ORACLE_HOME=/u01/app/oracle/product/11.2.0/xe
+export ORACLE_SID=XE
+export PATH=$ORACLE_HOME/bin:$PATH
+
+source /etc/profile
+
+---
+
+. /u01/app/oracle/product/11.2.0/xe/bin/oracle_env.sh
+
+su oracle
+sqlplus /nolog
+
+ conn sys as sysdba
+ 암호입력
+ 
+create tablespace ts_bigdata
+datafile '/u01/app/oracle/oradata/XE/ts_bigdata.dbf'
+size 100M autoextend on next 50M;
+
+
+create user bigdata identified by oracle
+default tablespace ts_bigdata
+temporary tablespace TEMP;
+
+grant connect, resource to bigdata;
+
+
+alter user hr identified by hr account unlock;
+
+
+@?/rdbms/admin/utlsampl.sql
