@@ -1,0 +1,327 @@
+
+hadoop 3.x 가상분산Pseudo-distributed 설치
+>> 1대의 시스템이 하둡 클러스터로 작동하도록 설치하는 방식
+
+클러스터cluster : 서버그룹
+여러 대의 컴퓨터들이 하나의 시스템처럼 작동하는 컴퓨터들의 집합
+
+하둡 클러스터 구성
+   HDFS (데이터저장) : NameNode, DataNode, 2nd NameNode
+   YARN (리소스관리) : ResourceManager, NodeManager
+
+---
+
+1. 가상분산 설치를 위해 공개키 설정
+
+NameNode <=> DataNode
+	 <=> ResourceManager <=> NodeManager
+
+각 시스템에 ssh 접속시 아이디/비밀번호 입력을 요구받음
+이러한 과정을 생략하고 싶다면, 주 시스템에서 로그인할 계정에 대한
+공개키를 생성하고 각 시스템에 복사해 두면 됨
+
+---
+
+공개키는 비대칭 암호화에서 사용되는 두 가지 키 중 하나로, 
+데이터를 암호화하거나 신원을 인증하는 데 사용 
+비대칭 암호화는 공개키와 개인키라는 두 개의 키 쌍을 사용하는 암호화 방식
+
+공개키 : 주로 데이터를 암호화하거나, 인증을 위해 사용. 공개적으로 배포가능한 키
+개인키 : 소유자만 알고 있어야 하는 비밀 키. 공개키와 짝을 이루며, 
+공개키로 암호화된 데이터를 복호화할 수 있음
+
+
+1. 키 생성 (공개키와 개인키 쌍):
+사용자나 노드는 SSH 키 쌍, 즉 공개키와 개인키를 생성함
+
+2. 공개키 배포
+사용자는 자신의 공개키를 통신하려는 다른 노드의 
+~/.ssh/authorized_keys 파일에 추가
+
+3. 인증 과정
+사용자가 SSH를 통해 노드에 접속하려고 하면, 
+노드는 사용자에게 그 사용자가 실제로 공개키의 소유자인지 확인하기 위해 도전 과제를 보냄
+사용자는 자신의 개인키를 사용해 이 도전 과제에 대한 응답을 암호화하여 노드에 전송
+
+---
+
+sudo su
+
+su hadoop
+
+source /etc/profile
+
+# hadoop 계정을 위한 공개키/개인키 생성
+ssh-keygen -t rsa -P ""
+엔터
+
+# 공개키/개인키 생성 확인
+ls -al /home/hadoop
+>> .ssh 폴더 확인
+
+ls -al ~/.ssh
+>> id_rsa (개인키), id_rsa.pub (공개키)
+
+# 공개키를 authorized_keys에 복사(등록)
+cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+
+# authorized_keys의 권한(퍼미션)을 변경
+#       421 421 421
+# 600 : rw- --- ---
+chmod 0600 ~/.ssh/authorized_keys
+
+# 서버의 공개키들을 수집해서
+# 암호없이 접속가능한 호스트로 등록
+ssh-keyscan -H localhost >> ~/.ssh/known_hosts
+
+---
+
+2. hadoop 가상분산모드를 위한 환경설정
+core-site.xml    : 하둡 전반에 대한 설정
+hdfs-site.xml    : hdfs 에 대한 설정
+yarn-site.xml    : yarn 에 대한 설정
+mapred-site.xml  : 맵리듀스 에 대한 설정
+
+# HADOOP_CONF_DIR 환경변수를 사용해서
+# 하둡 설정파일들이 있는 디렉토리로 전환
+cd $HADOOP_CONF_DIR
+
+1) core-site.xml 수정
+
+vi core-site.xml
+
+<property>
+    <name>fs.defaultFS</name>
+    <value>hdfs://localhost:9000</value>
+</property>
+<property>
+    <name>hadoop.tmp.dir</name>
+    <value>/opt/hadoop/tmp</value>
+</property>
+
+---
+
+2) hdfs-site.xml 수정
+
+vi hdfs-site.xml
+
+<property>
+  <name>dfs.replication</name>
+  <value>1</value>
+</property>
+<property>
+  <name>dfs.namenode.name.dir</name>
+  <value>/opt/hadoop/data/dfs/namenode</value>
+</property>
+<property>
+  <name>dfs.datanode.data.dir</name>
+  <value>/opt/hadoop/data/dfs/datanode</value>
+</property>
+
+
+3) yarn-site.xml 수정
+
+vi yarn-site.xml
+
+<property>
+	<name>yarn.resourcemanager.hostname</name>
+	<value>localhost</value>
+</property>
+<property>
+	<name>yarn.nodemanager.aux-services</name>
+	<value>mapreduce_shuffle</value>
+</property>
+
+
+4) mapred-site.xml 수정
+
+vi mapred-site.xml
+
+<property>
+	<name>mapreduce.framework.name</name>
+	<value>yarn</value>
+</property>
+<property>
+	<name>yarn.app.mapreduce.am.env</name>
+	<value>HADOOP_MAPRED_HOME=/opt/hadoop</value>
+</property>
+<property>
+	<name>mapreduce.map.env</name>
+	<value>HADOOP_MAPRED_HOME=/opt/hadoop</value>
+</property>
+<property>
+	<name>mapreduce.reduce.env</name>
+	<value>HADOOP_MAPRED_HOME=/opt/hadoop</value>
+</property>
+
+
+---
+
+3. 설정 내용대로 tmp/namenode/datanode 생성
+
+cd $HADOOP_HOME
+
+mkdir tmp
+mkdir -p data/dfs/namenode
+mkdir -p data/dfs/datanode
+chmod 755 data/dfs/namenode
+chmod 755 data/dfs/datanode
+
+# hadoop-env.sh에 JDK 위치 설정
+JAVA_HOME=$(readlink -f /usr/bin/java | sed "s:/bin/java::")
+echo "export JAVA_HOME=$JAVA_HOME" >> $HADOOP_HOME/etc/hadoop/hadoop-env.sh
+
+---
+4. namenode 초기화 및 실행
+
+hdfs namenode -format
+
+>> "Storage directory /opt/hadoop/data/dfs/namenode has been successfully formatted." 메세지 확인
+
+---
+# namenode/datanode 실행
+start-dfs.sh
+
+>> Starting namenodes on [localhost]
+>> Starting datanodes
+
+# java 프로세스 실행 확인
+jps
+
+>> 6082 SecondaryNameNode
+>> 6234 Jps
+>> 5755 NameNode
+>> 5887 DataNode
+
+---
+# resoucemanager/nodemanager 실행
+start-yarn.sh
+
+>> Starting resourcemanager
+>> Starting nodemanagers
+
+jps
+
+6322 ResourceManager
+6082 SecondaryNameNode
+6791 Jps
+6458 NodeManager
+5755 NameNode
+5887 DataNode
+
+---
+
+# hdfs 생성 결과 확인
+hdfs dfsadmin -report
+
+>> Configured Capacity: 14683217920 (13.67 GB)
+
+# yarn 실행 결과 확인
+yarn node -list
+
+>> ubuntu:44959                RUNNING       ubuntu:8042 
+
+---
+
+# hadoop 웹 UI
+브라우져 실행후 "가상머신IP:9870" 입력
+
+---
+5. HDFS에 사용자 영역 생성
+hadoop을 단독모드로 설치하고 분석자료를 저장하기 위해 
+'리눅스 명령'으로 디렉토리/파일등을 생성했었음
+
+하지만, hadoop을 가상분산모드로 설치한 경우,
+hadoop 전용 명령으로 hdfs에 디렉토리/파일등을 만들고
+분석자료를 저장해둬야 함!!
+
+# hadoop 사용자가 사용할 HDFS 영역 생성
+hadoop fs -mkdir -p /user/hadoop
+hadoop fs -chown hadoop:hadoop /user/hadoop
+
+hadoop fs -mkdir -p /tmp
+hadoop fs -chmod 777 /tmp
+
+hadoop 웹 UI에서 생성한 디렉토리 확인
+>> /user, /tmp
+
+---
+6. hadoop 샘플 예제 실행 1
+
+hadoop jar \
+share/hadoop/mapreduce/hadoop-mapreduce-examples-3.3.6.jar \
+pi 16 1000
+
+>> Job Finished in 80.743 seconds
+
+---
+7. hadoop 샘플 예제 실행 2
+
+hadoop fs -mkdir input
+
+hadoop fs -put $HADOOP_HOME/etc/hadoop/* input
+
+hadoop fs -rm -R input/shellprofile.d
+hadoop fs -rm -R input/data 
+
+hadoop fs -ls input
+
+hadoop 웹 UI에서 복사한 파일 확인
+>> /user/hadoop/input
+
+hadoop jar \
+$HADOOP_HOME/share/hadoop/mapreduce/hadoop-mapreduce-examples-3.3.6.jar \
+grep  input  output  'dfs[a-z.]+'
+
+hadoop fs -cat output/*
+
+중요!!) 가상분산모드로 설치한 경우
+데이터들은 hdfs에 저장이 되어 있어야 맵리듀스 작업 가능!!
+
+---
+8. hadoop 샘플 예제 실행 3
+
+hadoop jar \
+$HADOOP_HOME/share/hadoop/mapreduce/hadoop-mapreduce-examples-3.3.6.jar \
+wordcount  input  output2
+
+hadoop fs -cat output2/*
+
+---
+9. hadoop 샘플 예제 실행 4
+
+hadoop fs -put /home/ubuntu/*.txt .
+
+hadoop fs -ls .
+
+hadoop jar \
+$HADOOP_HOME/share/hadoop/mapreduce/hadoop-mapreduce-examples-3.3.6.jar \
+wordcount  stevejobs_ko.txt output3
+
+hadoop fs -cat output3/*
+
+---
+10. hadoop 샘플 예제 실행 5
+
+hadoop fs -put /home/ubuntu/sample.txt .
+
+hadoop jar \
+~/MaxTemp.jar \
+hadoop.MaxTemperature  sample.txt  output4
+
+hadoop fs -cat output4/*
+
+---
+hadoop fs 명령 도움말
+
+https://hadoop.apache.org/docs/r3.3.6/hadoop-project-dist/hadoop-common/FileSystemShell.html
+
+
+
+
+
+
+
+
+
+
