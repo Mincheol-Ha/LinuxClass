@@ -89,7 +89,6 @@ chown hive:hadoop -R /opt/hive
 
 5. hadoop 사용자가 사용할 HDFS 영역 생성
 >> hadoop 계정으로만 생성할 수 있음
-
 su hadoop
 source /etc/profile
 cd $HADOOP_HOME
@@ -277,26 +276,109 @@ cp /home/ubuntu/*.csv .
 
 ls
 
+hadoop fs -chmod -R 777 /user/hive
+
+12. hive 내부 테이블 만들어 보기
+
+# hive 작동 원리
+hive는 테이블의 정보를 저장하고 관리하기 위해
+메타스토어라는 내부 데이터베이스를 사용
+즉, 테이블의 스키마는 메터스토어를 통해 관리한다는 의미
+
+따라서, 메타스토어에는 테이블 스키마를 저장해두고,
+테이블의 실제 데이터는 hadoop의 HDFS에 저장함
 
 
+# hive 내부 vs 외부 테이블
+내부 테이블
+테이블과 관련된 데이터를 hive에서 직접 관리함(managed table)
+실제 데이터는 warehouse에서 확인 가능
+단, 테이블 삭제시 hdfs 상의 데이터도 같이 제거됨! (중요)
+
+외부 테이블
+테이블은 hive가 관리하지만,
+관련된 데이터는 hadoop에서 관리함(unmanaged table)
+단, 테이블 삭제시 스키마만 제거되고, hdfs 상의 데이터는 남아있음! (중요)
 
 
+# iris 내부 테이블 생성
+# 문자 : string
+# 숫자 : int, float
+# 날짜 string, date
 
 
+CREATE TABLE IF iris (
+sepal_length float, sepal_width float,
+petal_length float, petal_width float,
+species string)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' STORED AS TEXTFILE;
+
+select * from iris;
+>>데이터 없음
+
+#데이터를 테이블에 적재시 header는 제외
+alter table iris
+set TBLPROPERTIES('skip.header.line.count' = '1');
+
+# 데이터를 테이블에 적재
+# load data local inpath CSV파일결로
+# into table 테이블 명
+load data local inpath 'home/hive/iris.csv'
+into table iris;
+
+select * from iris;
 
 
+새 터미널 열고
+sudo su
+su hadoop
+source /etc/profile
+cd $HADOOP_HOME
+
+hadoop fs -chmod -R 777 /tmp
+# iris EDA
+--- 품종이 setosa인 붓꽃을 조회하세요
+select * from iris where species = "setosa";
+
+--- 품종이 setosa인 붓꽃의 수량을 조회하세요
+select count(species) cnt from iris where species = 'setosa';
+
+--- 품종별 붓꽃의 수량을 조회하세요.
+select species, count(species) cnt from iris group by species;
+
+---
+
+hotdog-winners.csv를 내부테이블에 적재하고
+적절한 EDA를 수행하세요
+
+--- 새로운 기록을 새운 사람들을 조회하세요
+select * from hotdog_winners where new_record = "1";
+
+--- 국가가 Japan이 아닌 사람이 몇 명인지 조회하세요
+select count(country) from hotdog_winners where country != "jepan";
+
+-- 많이 먹은 순서로 조회하세요
+select * from hotdog_winners order by dogs_eaten desc;
+
+-- 국가별 우승횟수
+select country, count(country) wins
+from hotdog_winners
+group by country
+order by wins desc;
+
+-- 선수별 우승횟수
+select winner, count(winner) wins
+from hotdog_winners
+group by winner
+order by wins desc;
 
 
+# 내부 테이블에 저장된 데이터 확인 (hive 계정으로)
+hadoop fs -ls warehouse/bigdata.db
 
+hadoop fs -ls warehouse/bigdata.db/iris
 
-
-
-
-
-
-
-
-
+hadoop fs -cat warehouse/bigdata.db/iris/*
 
 
 
