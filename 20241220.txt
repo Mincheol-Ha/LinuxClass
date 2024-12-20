@@ -1,0 +1,359 @@
+https://buly.kr/DlIUwLQ
+
+orange3 데이터 시각화
+OLTP, OLAP(저장용, 수정X)
+
+---
+hive.apache.org
+
+1. 설치준비
+
+sudo su
+source /etc/profile
+
+2.
+wget https://archive.apache.org/dist/hive/hive-3.1.3/apache-hive-3.1.3-bin.tar.gz
+
+tar -zxf apa탭
+mv apa탭 hive
+mv hive /opt/
+
+ls /opt
+
+3. hive 환경설정
+
+cat <<EOL >> /etc/profile
+
+export HIVE_HOME=/opt/hive
+export PATH=\$PATH:\$HIVE_HOME/bin
+EOL
+
+source /etc/profile
+
+hive --version
+
+---- 아래 한번에----
+
+cd $HIVE_HOME
+
+cp conf/hive-env.sh.template  conf/hive-env.sh
+
+echo "export HADOOP_HOME=/usr/share/hadoop" \
+conf/hive-env.sh
+
+cd conf
+
+cp hive-exec-log4j2.properties.template \
+hive-exec-log4j2.properties
+
+cp hive-default.xml.template  hive-site.xml
+
+cp beeline-log4j2.properties.template \
+beeline-log4j2.properties
+
+--- 
+
+
+4. hive 설정
+
+cd $HIVE_HOME
+
+vi conf/hive-site.xml
+
+# vi 편집기 에서 줄번호 표시
+:set nu
+
+#21라인에 다음 내용 추가
+21라인 커서 이동 
+o
+
+<property>
+<name>system:java.io.tmpdir</name>
+<value>/tmp/hive/java</value>
+</property>
+<property>
+<name>system:user.name</name>
+<value>${user.name}</value>
+</property>
+
+esc
+:wq
+
+
+# hive 계정 추가
+adduser hive --ingroup hadoop
+암호:hive
+나머지는 엔터
+chown hive:hadoop -R /opt/hive
+
+
+5. hadoop 사용자가 사용할 HDFS 영역 생성
+>> hadoop 계정으로만 생성할 수 있음
+
+su hadoop
+source /etc/profile
+cd $HADOOP_HOME
+
+hadoop fs -mkdir -p /user/hive
+hadoop fs -chown hive:hive /user/hive
+hadoop fs -chmod -R 777 /user/hive
+
+hadoop fs -mkdir -p /tmp/hive
+hadoop fs -chmod  -R 777 /tmp/hive
+
+---오류 발생시
+start-dfs.sh
+start-yarn.sh
+---
+
+jps
+
+hadoop 웹 UI로 샌성한 디렉토리 확인
+
+# root 계정으로 전환
+ctlr + d
+
+---
+
+6. hive 메타스토어 설정
+
+# 메타스토어 관련 파일 복사
+cp $HADOOP_HOME/share/hadoop/common/lib/gu탭 $HIVE_HOME/lib
+붙여넣기 할때  $HADOOP_HOME 앞에 \가 붙는데 지워야함.
+
+su hive (로 저장)
+cd $HIVE_HOME
+ls $HIVE_HOME/lib/g*
+>>/opt/hive/lib/guava-27.0-jre.jar
+
+# hive-site.xml의 3223라인 특수문자(&#8;) 제거
+vi conf/hive-site.xml
+
+:3223
+del 키로삭제
+(insert 띄우기)
+esc
+:wq
+
+# 메타스토어 초기화
+# apache derby 데이터베이스 형식의 metastore 생성
+schematool -initSchema -dbType derby
+
+>>  schemaTool completed 확인
+
+
+# 메타스토어  확인
+ls scripts/metastore/upgrade
+ls scripts/metastore/upgrade/mysql
+
+
+7. hive CLI
+
+hive
+>> hive 프롬프트 표시 확인
+
+# HiveQL로 기본 데이터베이스 확인
+show databases;
+=> default 확인
+
+# 실습용 데이터베이스 생성
+create database bigdate;
+show databases;
+
+# 작업 데이터베이스를 bigdata로 전환
+use bigdata;
+
+
+# stock 외부 테이블 생성
+create external table stocks ( exchanges STRING,
+symbol STRING, ymd STRING, price_open FLOAT, price_high FLOAT, price_low FLOAT,
+price_close FLOAT, volume INT, price_adj_close FLOAT)
+row format delimited fields terminated by ',' location '/user/hive/stock';
+
+show tables;
+desc stocks;
+
+
+# zipcode 내부 테이블 생성
+CREATE TABLE IF NOT EXISTS zipcode (
+zipcode string, sido String, gugun String, dong String, bunji String, bldg String)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' STORED AS TEXTFILE;
+
+show tables;
+desc zipcode;
+
+exit;
+
+# 생성한 테이블들이 HDFS에 어떻게 저장되어 있는지 확인
+
+hadoop fs -ls .
+>> stock 확인
+
+hadoop fs -ls warehouse
+>> bigdata.db 확인
+
+hadoop fs -ls warehouse/bigdata.db
+>> zipcode 확인
+
+
+---
+8. hive가 원격접속 가능하도록 설정 1 - beeline (내장모드)
+hdfs <- hive <->dbeaver
+hdfs <- hive <->python
+
+beeline 
+JDBC를 이용해서  hadoop/hive 쿼리를 실행하게 해주는 hive 클라이언트
+
+# beelinde을 이용한 hive 접속
+
+beeline -u jdbc:hive2://
+>> 0: jdbc:hive2://>  프롬프트 확인
+
+show databases;
+use bigdata;
+show tables;
+desc zipcode;
+!quit
+
+9. hive가 원격접속 가능하도록 설정 2 - thrift
+가상머신 (hadoop - hive) <- 윈도우 (dbeaver, jupyterlab)
+
+원격모드 : thrift 통신을 통해 원격지에 있는 hive에 접속 가능!
+
+thrift : 페이스북이 만든 RPC 기술 중의 하나 
+다양한 프로그래밍 언어간에 효율적인 서비스를 정의하고
+상호운용할 수 있도록 설계된 인터페이스 정의 언어 및 바이너리 통신 프로토콜
+
+
+RPC : remote, procedure call
+원격에 있는 함수를 호출해주는 프로세스간 통신 기술
+
+---
+
+#일단, hive 계정 역시 mapreduce 명령을 사용할 수 있도록 권한부여! (중요!!)
+
+새 터미널 열고
+sudo su
+su hadoop
+source /etc/profile
+cd $HADOOP_HOME
+vi etc/hadoop/core-site.xml
+
+esc 
+:wq
+
+# hadoop 재시작
+stop-yarn.sh
+stop-dfs.sh
+
+start-dfs.sh
+start-yarn.sh
+
+# 기존 터미널에서 계속 작업(hive 계정)
+# 원격 접속시 hiveserver2를 이용
+# 리눅스 명령 & : 특정 프로세스를 백그라운드 형태로 실행하겠다는 의미
+
+hive --service hiveserver2 &
+엔터
+
+
+----
+10. dbeaver로 접속 확인
+
+host : 가상머신 IP
+database : bigdata
+
+---
+
+11. 실습용 csv 파일 업로드
+
+실습용 csv 파일을 ubuntu 홈디렉토리에 업로드해 둠 SFTP
+
+
+#csv 파일ㄹ을 hive 홈디렉토리로 복사
+cd ~
+
+cp /home/ubuntu/*.csv .
+
+ls
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
