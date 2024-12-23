@@ -1,0 +1,263 @@
+
+---
+
+13. HivQL로 데이터 분석 고급 예제
+
+실습전 준비
+
+만약, 가상머신을 재시작했다면, 다음 명령 실행
+
+sudo su 
+su hadoop
+source /etc/profile
+
+start-dfs.sh
+start-yarn.sh
+
+ctrl + d
+
+su hive
+source /etc/profile
+cd $HIVE_HOME
+hive --service hiveserver2 &
+
+dbesver 실행 후 hive 접속
+
+---
+
+# 사원/부서 데이터를 이용해서 emp, dept 라는
+hive 내부 테이블 생성
+>> 기본키/외래키 제약조건은 설정 x
+
+emp : empid, lname, fname, phone, email,
+        hdate, jobid, sal, comm, mgrid, deptid
+dept : deptid, dname, mgrid, locid
+
+
+CREATE TABLE emp (
+empid int, fname string, lname string, email string, phone string,
+hdate date, jobid string, sal int, comm float, mgrid int, deptid int)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' STORED AS TEXTFILE;
+
+alter table emp
+set TBLPROPERTIES('skip.header.line.count' = '1');
+
+load data local inpath '/home/hive/EMPLOYEES.csv'
+into table emp;
+
+CREATE TABLE dept (
+deptid int, dname string, mgrid int, locid int)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' STORED AS TEXTFILE;
+
+alter table dept
+set TBLPROPERTIES('skip.header.line.count' = '1');
+
+load data local inpath '/home/hive/DEPARTMENTS.csv'
+into table dept;
+
+
+사원에 관한 모든 정보 조회
+select * from emp;
+
+사원들의 연봉 중 가장 많은 연봉 조회
+select max(sal) max_sal from emp;
+
+직책별 최대 연봉을 오름차순으로 조회
+select jobid, max(sal) max_sal  from emp
+group by jobid
+order by max_sal;
+
+모든 사원의 부서번호, 이름, 부서명, 연봉 조회
+select d.deptid, fname, dname, sal  
+from emp e join dept d on e.deptid = d.deptid;
+
+평균 연봉보다 많이 받는 사원 조회
+select * from emp where sal >
+(select acg(sal) avg_sal from emp)
+
+대용량 데이터를 하둡 분산 시스템에 저장하고 하이브.....??
+
+
+14. Hadoop 배포판을 이용한 실습
+
+cloudera 압축파일 해제 해 둠
+
+
+가상미이지의 메모리는 6144로 변경, 프로세서는 2/2로 설정
+
+
+# 테이블 생성시 parque 타임으로 지정
+
+# titanic EDA
+
+# 승객의 성별sex 생존 현황 조사
+
+# 승객의 승선위치별 ebarked 생존 현황 조사
+
+# titanic 데이터가 잘못 업로드 된 경우
+터미널에서
+hadoop fs -rm -R /user/cloudera/titanic.csv
+hadoop fs -rm -R /user/cloudera/titanic.csv_table
+
+---
+aws EC2 에 mariadb, docker 설치
+
+1. 지역 설정
+지역을 서울로 설정!
+
+2. 즐겨찾기 메뉴 추가
+>> EC2m RDS, VPC, IAM
+
+3. EC2 둘러보기
+>> 우분투 인스턴스 생성
+
+4. EC2 초기설정
+#시스템 시간 설정
+sudo timedatectl set-timezone "Asia/Seoul"
+sudo hwclock
+
+# 호스트이름 설정
+sudo hostnamectl set-hostname clouds2025
+
+# 가상 메모리 성정 (2G) (한줄씩)
+free -h
+
+sudo dd  if=/dev/zero  of=/swapfile  bs=1024  count=2097152
+sudo mkswap /swapfile
+sudo swapon /swapfile
+sudo chmod 600 /swapfile
+sudo sed -i '$a/swapfile\tswap\tswap\tdefaults\t0\t\t0' /etc/fstab
+
+free -h
+---
+
+# 로케일 설정 - 한글 메세지 출력
+
+sudo apt -y install language-pack-ko
+sudo localectl set-locale LANG=ko_KR.UTF-8
+
+---
+
+5. nginx 설치
+
+#nginx.org - 웹서버
+
+sudo apt install curl gnupg ca-certificates lsb-release ubuntu-keyring
+
+curl https://nginx.org/keys/nginx_signing.key | gpg --dearmor \
+    | sudo tee /usr/share/keyrings/nginx-archive-keyring.gpg >/dev/null
+
+echo "deb [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] \
+http://nginx.org/packages/ubuntu `lsb_release -cs` nginx" \
+    | sudo tee /etc/apt/sources.list.d/nginx.list
+
+sudo apt update -y
+sudo apt install -y nginx
+
+sudo systemctl start nginx
+sudo systemctl enable nginx
+
+curl localhost
+
+웹 브라우져 -> 퍼블릭IP
+>> 접속 안됨 - AWS 방화벽에서 nginx가 사용하는 포트(80)를 차단중이기 때문
+
+---
+
+6. amazone jdk 설치
+
+
+sudo su     (관리자 계정 전환)
+
+wget https://corretto.aws/downloads/latest/amazon-corretto-8-x64-linux-jdk.deb
+
+apt install -y java-common
+
+dpkg -i a탭
+
+java -version
+
+JAVA_HOME=$(readlink -f /usr/bin/java | sed "s:/bin/java::")
+echo "export JAVA_HOME=$JAVA_HOME" >> /etc/profile
+echo "export PATH=\$JAVA_HOME/bin:\$PATH" >> /etc/profile
+source /etc/profile
+
+ctrl + d
+
+7. tomcat 설치
+
+tomcat.apach.org
+
+wget https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.98/bin/apache-tomcat-9.0.98.tar.gz
+
+# 셸을 사용하지 않는 계정 추가 - 톰캣 관리 전용 계정
+# 로그인을 따로 하지 않는 계정이라는 의미
+sudo useradd -m -d /opt/tomcat \
+-U -s /bin/false tomcat
+
+#
+sudo tar zxf a탭 \
+-C /opt/tomcat --strip-component=1
+
+# 소유자 변경
+sudo chown -R tomcat:tomcat /opt/tomcat
+sudo chmod -R u+x /opt/tomcat/bin
+
+#tomcat 실행
+sudo /opt/tomcat/bin/startup.sh
+
+curl localhost:8080 
+
+웹 브라우져 -> 퍼블릭IP:8080
+>> 접속 안됨 - AWS 방화벽에서 nginx가 사용하는 포트를 차단중이기 때문
+
+---
+
+
+# 기타 사용자 권한 부여
+sudo chmod -R o+rx /opt/tomcat
+sudo chmod -R 777 /opt/tomcat/logs
+sudo chmod -R 777 /opt/tomcat/temp
+sudo chmod -R 777 /opt/tomcat/work
+
+---1223 여기까지
+
+---
+# tomcat 실행
+cd /opt/tomcat
+sudo ./bin/startup.sh
+
+sudo sed -i 's/#Port 22/Port 12137/' /etc/ssh/sshd_config
+sudo systemctl restart sshd
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
