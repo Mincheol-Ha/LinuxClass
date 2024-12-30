@@ -1,0 +1,37 @@
+# AWS 보안설정 - IAM
+>> MFA 설정
+
+# mariadb 설치
+>> 데이터베이스 인코딩 확인
+>> show variables like '%char%';
++--------------------------+----------------------------+
+| Variable_name            | Value                      |
++--------------------------+----------------------------+
+| character_set_client     | utf8mb3                    |
+| character_set_connection | utf8mb3                    |
+| character_set_database   | utf8mb4                    |
+| character_set_filesystem | binary                     |
+| character_set_results    | utf8mb3                    |
+| character_set_server     | utf8mb4                    |
+| character_set_system     | utf8mb3                    |
+| character_sets_dir       | /usr/share/mysql/charsets/ |
++--------------------------+----------------------------+
+
+>> AWS 보안그룹 설정 - 3306 포트 허용
+>> dbeaver 접속확인
+>> 샘플용 테이블 생성
+
+# Android App 프로젝트
+>> github.com/zzyzzy
+>> DatabaseHelper 수정
+
+
+
+
+
+
+
+
+
+
+

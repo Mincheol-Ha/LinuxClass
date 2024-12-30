@@ -1,0 +1,29 @@
+10
+https://buly.kr/58ROJCY
+
+11
+https://buly.kr/8Tpmwhx
+
+12
+https://buly.kr/D3dUUcQ
+
+13
+https://buly.kr/2qXXbJ7
+
+---
+
+안드로이드 studio 설치
+>> 안드로이드 studio 테마 변경
+>> git 설치여부 확인
+
+Android 스튜디오의 SDK Manager를 이용해서 안드로이드 sdk 설치
+>> SDK platform
+>> SDK command-line tools
+
+안드로이드 AVD 생성
+>> pixel 3a
+>> 
+
+
+
+
