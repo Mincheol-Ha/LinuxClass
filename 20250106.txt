@@ -1,0 +1,86 @@
+# Spring boot EOL
+spring.io/projects/spring-boot
+
+# maven
+자바 프로젝트를 관리하고 빌드하는 데 사용되는 도구
+프로젝트의 의존성관리, 컴파일, 테스트, 패키징등의 작업을 자동화해주는 역할
+
+# spring boot 앱 JAR 파일 만들기
+>> 프로젝트 명령 프롬프트에서 다음 명령 실행
+mvnw package
+
+# spring boot 앱 JAR 실행하기
+명령 프롬프트에서
+
+>> java -jar C:\Java\hello_springbotte_app.jar
+
+# github를 이력서처럼 쓰고 싶다면?
+github badge => shields.io
+
+# ubuntu 22.04 LTS에서 spring boot app 실행하기
+1) jdk 설치여부 확인
+java -version
+
+wget https://corretto.aws/downloads/latest/amazon-corretto-17-x64-linux-jdk.deb
+
+sudo apt install -y java-common
+
+sudo dpkg -i a탭
+
+2) github에서 소스 내려받기
+
+git clone https://github.com/Mincheol-Ha/hello_springbotte_app.git
+
+cd hello_springbotte_app
+
+chmod -R 777 .
+
+./mvnw clean
+
+./mvnw package (jar 파일 생성)
+>> java -jar target/hello_springbotte_app-0.0.1-SNAPSHOT.jar
+(>> java -jar target/hello 탭)
+
+>> 웹브라우저 실행 - 가상머신IP:8080/hello
+
+
+./mvnw spring-boot:run
+>> 웹브라우저 실행 - 가상머신IP:8080/hello
+
+
+
+# gradle 에서의 프로젝트 관리
+
+gradlew clean
+gradlew build
+
+>> build/libs 폴더에 jar 확인
+
+gradlew bootRun
+
+java -version
+
+git clone https://github.com/Mincheol-Ha/hello_springboot_app2.git
+
+cd hello_springboot_app2
+
+chmod -R 777 .
+
+./gradlew clean
+
+./gradlew build
+java -jar build/libs/hello_springboot_app2-0.0.1-SNAPSHOT.jar
+
+웹브라우저 실행 - 가상머신IP:8080/hello
+
+
+
+
+
+
+
+
+
+
+
+
