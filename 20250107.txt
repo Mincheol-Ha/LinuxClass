@@ -1,0 +1,190 @@
+#도커 기본 명령어
+1) 도커 버젼 확인
+docker --version
+
+2) 도커 상세 정보 확인
+docker info
+
+3) 도커 이미지 확인
+docker images
+
+
+4) 도커 이미지 다운로드
+# 도커이미지명 - 레포지토리명/이미지명:태그
+# 레포지토리명 : 이지미가 저장된 위치(서버)를 의미
+>> 생략한 경우 docker hub에 저장된 이미지를  의미
+# 이미지명 : 특정 이미지를 식별하는 이름
+# 태그 : 이미지의 버전을 의미, 생략시 최근버전(latest)을 의미
+docker pull 도커이미지명
+
+docker pull python:3.11
+
+
+5) 도커 이미지 제거
+docker rmi 이미지명
+
+docker images
+
+docker rmi hello-world
+
+Error response from daemon: conflict: unable to remove repository reference "hello-world" (must force) - container c7c46db01255 is using its referenced image d2c94e258dcb
+>> 삭제 불가 - 컨테이너로 이미 사용중이라서
+
+# -f : 강제 삭제 (forced)
+docker rmi -f hello-world
+
+Untagged: hello-world:latest
+Untagged: hello-world@sha256:5b3cc85e16e3058003c13b7821318369dad01dac3dbb877aac3c28182255c724
+Deleted: sha256:d2c94e258dcb3c5ac2798d32e1249e42ef01cba4841c2234249495f87264ac5a
+
+
+6) 도커 컨테이너 목록 확인
+docker ps
+
+# -a : 중지된 컨테이너도 출력(all)
+docker ps -a
+
+
+7) 도커 컨테이너 관리
+# run : 컨테이너 생성 및 실행, 만약 이미지가 없다면 자동으로 pull 실행
+# start : 중지된 컨테이너를 다시 시작
+# stop : 실행중인 컨테이너를 중지
+# rm : 중지된 컨테이너를 삭제. 실핼중인 컨테이너는 삭제 불가! (단, -f는 가능)
+
+docker stop nginx2
+docker stop mariadb106
+docker stop 컨테이너ID
+docker stop 2878ec3a3c74
+
+#hello-world 컨테이너 삭제
+docker rm c7c46db01255
+docker rm 2878ec3a3c74
+
+docker start nginx2
+docker ps
+
+# 모든 컨테이너 삭제
+# -q : 컨테이너의 id 출력
+docker rm $(docker ps -a -q) (실행중인 것은 불가)
+docker rm -f $(docker ps -a -q) (실행중인 것 까지 삭제)
+
+# 모든 컨테이너 삭제 2
+docker container prune
+
+
+8) docker 로그 확인
+sout
+
+docker run -d --name nginx -p 80:80 nginx
+
+docker logs nginx(컨테이너명)
+
+---
+
+9) 도커 컨테이너 내부 접속하기
+# docker exec 옵션 컨테이너명 명령어
+# -it : 인터랙티브 모드로 컨테이너접속
+
+docker exec -it nginx /bin/bash
+
+cat > /usr/share/nginx/html/index.html
+<h1>Hello, World!!</h1>
+crtl+D
+
+10) 도커 컨테이너 파일 복사하기
+# 호스트에서 컨테이너로 파일 복사
+docker cp 대상파일 컨데이터명:경로
+
+#컨테이너에서 호스트로 파일 복사
+docker cp 컨테이너명:대상파일 경로
+
+#nginx 컨테이너의 index.html을 수정하기
+docker cp nginx://usr/share/nginx/html/index.html .
+
+vi index.html
+<h2>Hello, Docker!!</h2> 추가
+docker cp index.html nginx://usr/share/nginx/html/index.html/
+
+11 ) docker 볼륨 다루기
+# volume : 도커에서 데이터에 영속성persistence을 제공하고 
+컨테이너간에 데이터를 공유하는 방법 제공
+
+# 볼륨 생성
+# 생성한 볼륨은 /var/lib/docker/volumes에서 확인 가능!
+docker volume create 볼륨명
+
+docker volume create mariadb_data_vol
+docker volume create mariadb_conf_vol
+
+# 컨테이너 볼륨 연결  
+# -v 볼륨명:연결할경로
+
+docker run -d --name mariadb1 \
+-p 3306:3306 -e MARIADB_ROOT_PASSWORD=ubuntu \
+mariadb:10.6
+
+docker exec -it mariadb1 /bin/bash
+>>root@ae00e14bdb11:/#
+
+ls /var/lib/mysql	(데이터 저장)
+ls /etc/mysql/mariadb.conf.d 	(서버 설정파일)
+
+ctrl+D
+
+docker rm -f mariadb1
+
+docker run -d --name mariadb1 \
+-p 3306:3306 -e MARIADB_ROOT_PASSWORD=ubuntu \
+-v mariadb_data_vol:/var/lib/mysql \
+-v mariadb_conf_vol:/etc/mysql/mariadb.conf.d \
+mariadb:10.6
+
+sudo ls /var/lib/docker/volumes/mariadb_data_vol/_data
+sudo ls /var/lib/docker/volumes/mariadb_conf_vol/_data
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
