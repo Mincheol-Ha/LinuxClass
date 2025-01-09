@@ -1,0 +1,96 @@
+# 도커 구조
+도커 데몬daemon
+도커 클라이언트
+도커 컨테이너
+도커 이미지
+도커 레지스트리
+
+# 도커 생명주기
+docker pull
+docker run -- 이미지를 기반으로 컨테이너를 생성하고 실행
+docker start/stop
+docker rm -- 삭제
+
+# ci/id 워크플로
+
+intelliJ  		->  	github  		<-	jenkins		-> 	docker hub
+소스작성			웹 훅 트리거		빌드, 테스트	
+푸시						도커 이미지 생성/푸시
+						컨테이너 생성/실행
+
+#도커 허브 계정 생성
+docker hub
+>> gmail로 생성했음
+
+
+# 도커 컴포즈 compose
+여러 컨테이너를 정의하고 실행하기 위한 도구
+yaml 파일을 통해 애플리케이션 서비스, 볼륨, 네트워크등을 정의
+애플리케이션의 여러 서비스를 하나의 명령으로 제어 가능
+개발환경이나 테스트 서버 구축에 유용
+
+버전 확인
+>> docker compose version
+
+
+# docker compose 예제 1 - nginx
+SFTP로 nginx 폴더 업로드
+터미널에서 다음 명령 실행
+>> cd ~/nginx
+>> ls
+
+>> docker stop nginx
+>> docker stop mariadb1
+>> docker container prune
+
+>> docker compose up -d (docker-compose.yaml이 있는 위치에서 실행!)
+>> curl localhost
+>> docker compose ps
+>> docker compose stop, docker compose down
+
+
+# html 볼륨 변경
+>> sudo chown ubuntu:ubuntu html
+>> ll
+>> cd ~/nginx
+>> cat > html/index.html
+>> <h1>Hello, Docker Compose!!</h1>
+>> ctrl + d
+>> docker compose up -d
+>> curl localhost
+
+# docker compose 예제 2 - mariadb
+>> docker volume ls  (볼륨확인)
+>> docker volume rm volume mariadb_data_vol
+>> docker volume rm volume mariadb_conf_vol
+>> docker compose up -d
+>> docker exec -it mariadb10620 /bin/bash
+
+
+# docker compose 예제 3 - mysql, wordpress
+>> cd~/wordpress
+>> docker compose up -d
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
