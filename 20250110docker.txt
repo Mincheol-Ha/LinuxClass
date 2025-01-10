@@ -1,0 +1,87 @@
+# Dockerfile 주요 명령어
+
+FROM : 베이스 이미지 지정, 첫번째 멸령어 이어야 함
+
+WORKDIR : 작업 디렉토리 지정, 
+	  이후 명령어들이 실행될 위치 지정
+
+COPY : 파일/디렉토리를 이미지에 복사
+
+ADD : COPY와 기능은 비슷
+	다운로드나 압축해제등의 추가기능 제공
+
+EXPOSE : 컨테이너 실행시 외부로 노출할 포트 지정
+	즉, 호스트에서 컨테이너로 접속시 사용할 포트 지정
+
+CMD : 컨테이너 실행기 실행할 명령어 지정
+
+ENV : 환경변수 지정 
+
+RUN : 이미지 빌드시 내부적으로 실행할 명령어
+         이미지내에추가 소프트웨어 설치, 파일구성이 필요할 경우 사용
+         - 이미지 용량 증가 원인 - 최적화 필요
+
+# Dockerfile 예제 2 -  tomcat
+>> tomcat 베이스 이미지에
+미리 작성해준 index.jsp를 복사하고
+실행하는 과정을 스크립트로 작성
+
+>> cd ~/tomcat2
+>> docker build -t 도커허브아이디/tomcat9 .
+>> docker images
+>> docker tun -d -p 9090:8080 도커허브아이디/tomcat9
+>> curl localhost:9090
+
+# Dockerfile 예제 3 - maven 기반 spring boot 앱
+> maven.apache.org - 최신버전은 3.9.9
+> maven에 사용할 jdk버전 : amazon correto 17 
+>> maven:3.9.9-amazoncorretto-17-alpine (153.32MB)
+>> 빌드와 실행으로 나눠 Dockerfile 작성
+
+
+>> cd ~/springboot_app01
+>> docker build -t 도커허브아이디/springboot_app01 .
+>> docker run -d -p 8080:8080 도커허브아이디/springboot_app01 
+>> curl 가상IP:8080/hello
+
+# Dockerfile 예제 4 -gradle 기반 spring boot 앱
+>> gradle.org - 최신버전은 8.12
+>> gradle에 사용할 jdk버전: amazon correto 17
+>> cd ~/springboot_app02
+>> docker build -t 도커허브아이디/springboot_app02 .
+>> docker run -d -p 8081:8080 도커허브아이디/springboot_app02
+>> curl 가상IP:8080/hello
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
